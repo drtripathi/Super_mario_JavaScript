@@ -1,36 +1,45 @@
 export default class SpriteSheet {
-    constructor(image, width, height){
+    constructor(image, width, height) {
         this.image = image;
         this.width = width;
         this.height = height;
-        this.tiles = new Map();//this the buffer created below in the map
+        this.tiles = new Map();
     }
 
-    define(name, x, y){
-        const buffer = document.createElement('canvas');//create a buffer to get the tile image
-        buffer.width = this.width;
-        buffer.height = this.height;
-        buffer.
-            getContext('2d')
+    define(name, x, y, width, height) {
+        const buffer = document.createElement('canvas');
+        buffer.width = width;
+        buffer.height = height;
+        buffer
+            .getContext('2d')
             .drawImage(
-                this.image, 
-                x * this.width,
-                y * this.height,
-                this.width,
-                this.height,
+                this.image,
+                x,
+                y,
+                width,
+                height,
                 0,
                 0,
-                this.width,
-                this.height);// draw the subset of the image
-        this.tiles.set(name , buffer);        
+                width,
+                height);
+        this.tiles.set(name, buffer)
     }
 
-    draw(name , context, x, y){
-        const buffer = this.tiles.get(name);//retrive the buffer from the tile set
+    defineTile(name, x, y) {
+        this.define(
+            name,
+            x * this.width,
+            y * this.height,
+            this.width,
+            this.height);
+    }
+
+    draw(name, context, x, y) {
+        const buffer = this.tiles.get(name);
         context.drawImage(buffer, x, y);
     }
 
-    drawTile(name, context, x, y){
+    drawTile(name, context, x, y) {
         this.draw(name, context, x * this.width, y * this.height);
     }
 }
