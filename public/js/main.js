@@ -1,43 +1,59 @@
 import Compositor from './Compositor.js';
+import Entity from './Entity.js';
 import {loadLevel} from './loaders.js';
-import {loadMarioSprite, loadBackgroundSprites} from './sprites.js';
-import {createBackgroundLayer} from './layers.js';
+import {createMario} from './entities.js';
+import {loadBackgroundSprites} from './sprites.js';
+import {createBackgroundLayer, createSpriteLayer} from './layers.js';
+import Timer from './Timer.js';
+import KeyBoardState from './KeyBoardState.js';
+
+
+
+
+
 
 const canvas = document.getElementById('screen');
 const context = canvas.getContext('2d');
 
 
-function createSpriteLayer(sprite, pos) {
-    return function drawSpriteLayer(context) {
-        sprite.draw('idle', context, pos.x, pos.y);
-    };
-}
-
-
 Promise.all([
-    loadMarioSprite(),
+    createMario(),
     loadBackgroundSprites(),
     loadLevel('1-1'),
 ])
-.then(([marioSprite, backgroundSprites, level]) => {
+.then(([mario, backgroundSprites, level]) => {
     console.log('Level loader', level);
 
     const comp = new Compositor();
-    comp.layers.push(createBackgroundLayer(level.backgrounds, backgroundSprites));
+    const backgroundLayer = createBackgroundLayer(level.backgrounds, backgroundSprites);
+    comp.layers.push(backgroundLayer);
 
-    const pos = {
-        x: 64,
-        y: 164,
-    };
+    const gravity = 1500; // to move mario from up to down
+    
+    mario.pos.set(90, 210);
 
-    comp.layers.push(createSpriteLayer(marioSprite, pos));
+    const SPACE = 32;
+    const input = new KeyBoardState();
+    input.addMapping(SPACE, keyState => {
+        if(keyState){
+            mario.jump.start();
+        }
+        else {
+            mario.jump.cancel();
+        }
+        console.log(keyState);
+    });
+    input.listenTo(window);
 
-    function update() {
+    const spriteLayer = createSpriteLayer(mario);
+    comp.layers.push(spriteLayer);
+
+    const timer = new Timer(1/60);
+    timer.update = function update(deltaTime) {
         comp.draw(context);
-        pos.x += 2;
-        pos.y += 1;
-        requestAnimationFrame(update);
+        mario.update(deltaTime);
+        mario.vel.y += gravity * deltaTime;
     }
 
-    update();
+    timer.start();
 });
